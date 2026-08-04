@@ -1,14 +1,22 @@
-import { defineConfig } from 'vite';
+import { defineConfig } from "vite";
+import { resolve } from "node:path";
 
-// Site 100% estático (HTML + CSS + JS em um único arquivo, sem framework).
-// O Vite é usado apenas como servidor de desenvolvimento e empacotador de build,
-// sem nenhuma transformação de conteúdo, layout ou comportamento.
 export default defineConfig({
-  root: '.',
+  root: ".",
   publicDir: false,
+
   build: {
-    outDir: 'dist',
+    outDir: "dist",
     emptyOutDir: true,
-    assetsInlineLimit: 0
-  }
+    assetsInlineLimit: 0,
+
+    rollupOptions: {
+      input: {
+        main: resolve(__dirname, "index.html"),
+        cardapio: resolve(__dirname, "cardapio.html"),
+        reservas: resolve(__dirname, "reservas.html"),
+        circle: resolve(__dirname, "circle.html"),
+      },
+    },
+  },
 });
