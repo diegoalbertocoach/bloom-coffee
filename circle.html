@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Bloom Circle — Bloom Coffee</title>
+<meta name="description" content="Bloom Circle — uma nova forma de viver a Bloom está florescendo.">
+<meta name="robots" content="noindex">
+<!--
+  ============================================================================
+  DEMO MODE — BLOOM CIRCLE CONCEPT (Fase 3, isolada, não conectada ao index.html)
+  ============================================================================
+  Esta página é uma DEMONSTRAÇÃO NAVEGÁVEL. Não existe:
+    login real, autenticação, banco de dados, cliente real, compra real,
+    ponto real, QR Code funcional, histórico real, painel administrativo
+    ou benefício oficialmente ativo.
+
+  Dados: assets/circle-data.js (BLOOM_CIRCLE_DEMO) — todos demonstrativos.
+  Lógica testável: assets/circle.js → BloomCircleLogic.
+
+  Privacidade — DEMO PREFERENCES ONLY, NO PERSONAL DATA:
+  localStorage é usado apenas para (1) lembrar se o onboarding já foi visto
+  e (2) lembrar o nível selecionado no painel de apresentação. Nenhum nome,
+  contato ou dado pessoal é solicitado ou armazenado nesta página.
+
+  O painel "Visualizar jornada" (canto inferior esquerdo) é uma ferramenta
+  de APRESENTAÇÃO PARA OS FOUNDERS, para alternar entre os 5 níveis durante
+  uma demonstração. Não deve seguir para uma versão publicada aos clientes
+  sem decisão específica sobre isso.
+  ============================================================================
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,420;0,9..144,480;0,9..144,600;1,9..144,420&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/shared.css">
+</head>
+<body class="no-cart-bar">
+
+<a class="sr-only" href="#circleRoot">Pular para o conteúdo</a>
+
+<!-- ================= HEADER ================= -->
+<header class="menu-header">
+  <a class="back-link" href="index.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M15 18l-6-6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <span>Bloom</span>
+  </a>
+  <span class="brand">Bloom Circle</span>
+  <a class="cart-peek" href="cardapio.html" aria-label="Ver cardápio digital">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 7h16l-1.5 11a2 2 0 0 1-2 1.8H7.5a2 2 0 0 1-2-1.8L4 7Z"/><path d="M8 7V5a4 4 0 0 1 8 0v2"/></svg>
+  </a>
+</header>
+
+<!-- ================= INTRO ================= -->
+<div class="menu-intro">
+  <p class="eyebrow">Bloom Circle</p>
+  <h1>Minha Jornada Bloom</h1>
+  <p>Cada visita faz a sua história com a Bloom crescer.</p>
+</div>
+
+<main class="circle-main" id="circleRoot">
+
+  <p class="circle-eyebrow-note">Uma nova forma de viver a Bloom está florescendo. O que você vê aqui é uma prévia da experiência — algumas partes ainda estão em construção.</p>
+
+  <!-- ================= NÍVEL ATUAL ================= -->
+  <section class="level-card">
+    <p class="level-card-eyebrow">Seu nível</p>
+    <div class="level-card-name" id="currentLevelName">—</div>
+    <p class="level-card-message" id="currentLevelMessage"></p>
+    <div class="progress-track"><div class="progress-fill" id="progressBarFill" style="width:0%;"></div></div>
+    <p class="progress-label" id="progressLabel"></p>
+    <div class="level-card-future" hidden>
+      <p class="level-card-future-label">Possibilidade da jornada</p>
+      <p class="level-card-future-text" id="currentLevelFuture"></p>
+    </div>
+  </section>
+
+  <!-- ================= LINHA DA JORNADA ================= -->
+  <section class="journey-section">
+    <h2 class="circle-section-title" id="circleGreeting">Olá.</h2>
+    <p class="circle-section-desc">Hoje é um ótimo dia para florescer.</p>
+    <div class="journey-line" id="journeyLine" role="list" aria-label="Níveis da Jornada Bloom"></div>
+  </section>
+
+  <!-- ================= ANIMAÇÃO DE CRESCIMENTO ================= -->
+  <div class="growth-section">
+    <svg class="growth-stage" id="growthIllustration" data-stage="1" viewBox="0 0 200 260" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Ilustração do crescimento da sua jornada Bloom, do broto ao florescimento">
+      <ellipse cx="100" cy="242" rx="46" ry="6" fill="#23331F" opacity="0.08"/>
+      <!-- semente -->
+      <ellipse data-min-stage="1" cx="100" cy="234" rx="6" ry="8" fill="#8A5A34"/>
+      <!-- caule -->
+      <path data-min-stage="2" d="M100 234C99 210 101 195 100 178" stroke="#5C6E48" stroke-width="2.6" stroke-linecap="round"/>
+      <!-- primeira folha -->
+      <path data-min-stage="2" d="M100 205C88 200 80 192 76 182C90 182 98 190 100 202Z" fill="#5C6E48"/>
+      <!-- galhos e folhas adicionais -->
+      <path data-min-stage="3" d="M100 178C99 155 102 140 100 122" stroke="#5C6E48" stroke-width="2.4" stroke-linecap="round"/>
+      <path data-min-stage="3" d="M100 190C112 185 120 177 124 167C110 167 102 175 100 187Z" fill="#6E8058"/>
+      <path data-min-stage="3" d="M100 160C89 155 82 147 79 138C92 138 99 146 100 158Z" fill="#5C6E48"/>
+      <!-- copa mais cheia -->
+      <path data-min-stage="4" d="M100 122C99 104 102 92 100 78" stroke="#5C6E48" stroke-width="2.2" stroke-linecap="round"/>
+      <path data-min-stage="4" d="M100 135C111 130 118 122 121 113C109 113 102 120 100 132Z" fill="#8D9E7A"/>
+      <path data-min-stage="4" d="M100 108C90 103 84 96 81 87C93 87 99 94 100 106Z" fill="#6E8058"/>
+      <circle data-min-stage="4" cx="100" cy="78" r="6" fill="#B5613F" opacity="0.85"/>
+      <!-- florescimento -->
+      <g data-min-stage="5">
+        <circle cx="100" cy="66" r="7" fill="#B5613F"/>
+        <circle cx="88" cy="72" r="6" fill="#C4805F"/>
+        <circle cx="112" cy="72" r="6" fill="#C4805F"/>
+        <circle cx="100" cy="56" r="6" fill="#C4805F"/>
+        <circle cx="100" cy="67" r="3.4" fill="#F4EEDF"/>
+      </g>
+    </svg>
+  </div>
+
+  <!-- ================= COLEÇÃO DAS ESTAÇÕES ================= -->
+  <section class="circle-section">
+    <h2 class="circle-section-title">Coleção das estações</h2>
+    <p class="circle-section-desc">Cada estação traz uma nova camada à sua jornada.</p>
+    <div class="seasonal-grid" id="seasonalCollection"></div>
+    <p class="seasonal-completion-note">Quando todas as estações fizerem parte da sua jornada, uma nova experiência Bloom poderá florescer.</p>
+  </section>
+
+  <!-- ================= EXPERIÊNCIAS ================= -->
+  <section class="circle-section">
+    <h2 class="circle-section-title">Experiências em desenvolvimento</h2>
+    <p class="circle-section-desc">Possibilidades da jornada, conforme sua relação com a Bloom se fortalece.</p>
+    <div class="experiences-grid" id="experiencesList"></div>
+  </section>
+
+  <!-- ================= HISTÓRICO ================= -->
+  <section class="circle-section">
+    <h2 class="circle-section-title">Sua história até aqui</h2>
+    <div id="historyTimeline"></div>
+  </section>
+
+  <!-- ================= MURAL DA COMUNIDADE ================= -->
+  <section class="circle-section">
+    <h2 class="circle-section-title">Pessoas que florescem conosco</h2>
+    <p class="circle-section-desc">Uma prévia conceitual. O mural será composto futuramente por pessoas reais, mediante consentimento — por enquanto, apenas formas e iniciais genéricas.</p>
+    <div class="mural-grid" id="muralGrid"></div>
+    <p class="mural-note">Nenhuma pessoa real está representada aqui.</p>
+  </section>
+
+  <!-- ================= CARTÃO DIGITAL CONCEITUAL ================= -->
+  <section class="circle-section">
+    <h2 class="circle-section-title">Seu cartão Bloom Circle</h2>
+    <div class="digital-card">
+      <div class="digital-card-top">
+        <span class="digital-card-logo">bloom circle</span>
+        <span class="digital-card-level" id="cardLevelName">—</span>
+      </div>
+      <div class="digital-card-name" id="cardUserName">—</div>
+      <div class="digital-card-since" id="cardMemberSince"></div>
+      <div class="digital-card-bottom">
+        <div class="digital-card-qr" aria-hidden="true">
+          <span></span><span></span><span></span><span></span>
+          <span></span><span></span><span></span><span></span>
+          <span></span><span></span><span></span><span></span>
+          <span></span><span></span><span></span><span></span>
+        </div>
+        <p class="digital-card-qr-note">Identificação digital em desenvolvimento.</p>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ================= RODAPÉ ================= -->
+<footer class="menu-footer">
+  <p>Bloom Circle é uma experiência em desenvolvimento.<br>Níveis, coleções e experiências futuras podem sofrer alterações.</p>
+</footer>
+
+<!-- ================= PAINEL DE DEMONSTRAÇÃO (uso interno) ================= -->
+<button class="demo-toggle" id="demoToggleBtn" aria-expanded="false" aria-controls="demoPanel">Visualizar jornada</button>
+<div class="demo-panel" id="demoPanel">
+  <button type="button" data-demo-level="semente">Semente</button>
+  <button type="button" data-demo-level="broto">Broto</button>
+  <button type="button" data-demo-level="jardim">Jardim</button>
+  <button type="button" data-demo-level="bloom">Bloom</button>
+  <button type="button" data-demo-level="embaixador">Embaixador Bloom</button>
+</div>
+
+<!-- ================= ONBOARDING ================= -->
+<div class="onboarding-overlay" id="onboarding">
+  <button class="onboarding-skip" id="onboardingSkipBtn">Pular</button>
+  <div class="onboarding-screens">
+    <div class="onboarding-screen is-active">
+      <p class="step-label">Faça parte</p>
+      <h2>Entre para o Bloom Circle.</h2>
+      <p>Uma nova forma de viver a Bloom, feita para quem já faz parte da nossa rotina.</p>
+    </div>
+    <div class="onboarding-screen">
+      <p class="step-label">Viva sua jornada</p>
+      <h2>Cada visita faz sua história crescer.</h2>
+      <p>Sua jornada é única — e cresce no seu tempo, a cada encontro com a Bloom.</p>
+    </div>
+    <div class="onboarding-screen">
+      <p class="step-label">Floresça conosco</p>
+      <h2>Novas experiências surgem conforme a relação com a Bloom se fortalece.</h2>
+      <p>Esta é uma prévia do que estamos construindo. Obrigado por fazer parte desde o início.</p>
+    </div>
+  </div>
+  <div class="onboarding-footer">
+    <div class="onboarding-dots"><span></span><span></span><span></span></div>
+    <button class="onboarding-next" id="onboardingNextBtn" type="button">Continuar</button>
+  </div>
+</div>
+
+<script src="assets/circle-data.js"></script>
+<script src="assets/circle.js"></script>
+</body>
+</html>

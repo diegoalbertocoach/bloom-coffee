@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Bloom Reservas — Testes automatizados</title>
+<style>
+  body{ font-family: -apple-system, sans-serif; max-width:720px; margin:40px auto; padding:0 20px; color:#1D1E19; }
+  h1{ font-size:20px; margin-bottom:4px; }
+  p.sub{ color:#666; font-size:13px; margin-bottom:24px; }
+  .result{ padding:10px 14px; border-radius:8px; margin-bottom:8px; font-size:13.5px; font-family:ui-monospace,monospace; white-space:pre-wrap; }
+  .pass{ background:#E7F3E9; color:#1E5B2F; }
+  .fail{ background:#FCE8E4; color:#8A2E1B; }
+  .summary{ margin-top:20px; padding:14px; border-radius:8px; font-weight:600; }
+  .summary.all-pass{ background:#1E5B2F; color:#fff; }
+  .summary.has-fail{ background:#8A2E1B; color:#fff; }
+</style>
+</head>
+<body>
+<h1>Bloom Reservas — Testes automatizados</h1>
+<p class="sub">Executa contra assets/reservas.js real (BloomReservationLogic), sem mocks. Abra este arquivo no navegador para rodar.</p>
+<div id="results"></div>
+<div id="summary"></div>
+
+<script src="../assets/reservas.js"></script>
+<script>
+(function () {
+  const results = [];
+  function assertEqual(actual, expected, label) {
+    const pass = JSON.stringify(actual) === JSON.stringify(expected);
+    results.push({ pass, label, actual, expected });
+  }
+  function assertTrue(value, label) {
+    results.push({ pass: !!value, label, actual: value, expected: true });
+  }
+
+  const L = BloomReservationLogic;
+
+  // ---------- 1. Campos obrigatórios ----------
+  const emptyCheck = L.validate({ name: "", phone: "", date: "", time: "", guests: 1 });
+  assertTrue(!emptyCheck.valid, "validate: formulário vazio é inválido");
+  assertTrue(!!emptyCheck.errors.name, "validate: nome vazio gera erro");
+  assertTrue(!!emptyCheck.errors.phone, "validate: telefone vazio gera erro");
+  assertTrue(!!emptyCheck.errors.date, "validate: data vazia gera erro");
+  assertTrue(!!emptyCheck.errors.time, "validate: horário vazio gera erro");
+
+  const shortName = L.validate({ name: "A", phone: "47999999999", date: L.todayIso(), time: "09:00", guests: 2 });
+  assertTrue(!!shortName.errors.name, "validate: nome com 1 letra é inválido (mínimo 2)");
+
+  // ---------- 2. Bloqueio de data passada ----------
+  assertTrue(!L.isDateNotPast("2000-01-01"), "isDateNotPast: data de 2000 é passada");
+  assertTrue(L.isDateNotPast("2099-01-01"), "isDateNotPast: data de 2099 não é passada");
+  assertTrue(L.isDateNotPast(L.todayIso()), "isDateNotPast: hoje é uma data válida (não é passada)");
+
+  const pastDateCheck = L.validate({ name: "Diego", phone: "47999999999", date: "2000-01-01", time: "09:00", guests: 2 });
+  assertTrue(!pastDateCheck.valid && !!pastDateCheck.errors.date, "validate: reserva com data passada é rejeitada");
+
+  // ---------- 3. Quantidade mínima e máxima de pessoas ----------
+  const belowMin = L.validate({ name: "Diego", phone: "47999999999", date: L.todayIso(), time: "09:00", guests: 0 });
+  assertTrue(!belowMin.valid && !!belowMin.errors.guests, "validate: 0 pessoas é inválido (mínimo 1)");
+
+  const aboveMax = L.validate({ name: "Diego", phone: "47999999999", date: L.todayIso(), time: "09:00", guests: 99 });
+  assertTrue(!aboveMax.valid && !!aboveMax.errors.guests, "validate: 99 pessoas é inválido (máximo configurado é 12)");
+
+  const validGuests = L.validate({ name: "Diego", phone: "47999999999", date: L.todayIso(), time: "09:00", guests: 12 });
+  assertTrue(validGuests.valid, "validate: 12 pessoas (limite máximo) é válido");
+
+  // ---------- 4. Horário inválido ----------
+  const badTime = L.validate({ name: "Diego", phone: "47999999999", date: L.todayIso(), time: "23:59", guests: 2 });
+  assertTrue(!badTime.valid && !!badTime.errors.time, "validate: horário fora da lista configurada é inválido");
+
+  // ---------- 5. Formulário completo e válido ----------
+  const fullValid = L.validate({ name: "Diego Souza", phone: "(47) 99999-9999", date: L.todayIso(), time: "09:00", guests: 4 });
+  assertTrue(fullValid.valid, "validate: formulário completo com telefone formatado é válido");
+
+  // ---------- 6. Geração da mensagem ----------
+  const msgData = {
+    name: "Diego Souza", phone: "47999999999", date: "2026-08-10", time: "09:00",
+    guests: 4, occasionLabel: "Encontro", methodLabel: "V60", notes: "Mesa perto da janela",
+  };
+  const msg = L.buildMessage(msgData);
+  assertTrue(msg.startsWith("Olá, Bloom Coffee."), "buildMessage: começa com a saudação correta");
+  assertTrue(msg.includes("Nome: Diego Souza"), "buildMessage: inclui o nome");
+  assertTrue(msg.includes("Data: 10/08/2026"), "buildMessage: data formatada em DD/MM/AAAA");
+  assertTrue(msg.includes("Ocasião: Encontro"), "buildMessage: inclui ocasião quando informada");
+  assertTrue(msg.includes("Método especial: V60"), "buildMessage: inclui método especial");
+  assertTrue(msg.includes("Observações: Mesa perto da janela"), "buildMessage: inclui observações quando informadas");
+  assertTrue(msg.includes("Entendo que a reserva depende de confirmação da equipe Bloom."), "buildMessage: inclui a frase obrigatória de confirmação humana");
+  assertTrue(!msg.includes("Reserva confirmada"), 'buildMessage: NUNCA contém "Reserva confirmada"');
+
+  // ---------- 7. Ausência de campos vazios desnecessários ----------
+  const minimalData = {
+    name: "Diego Souza", phone: "47999999999", date: "2026-08-10", time: "09:00",
+    guests: 2, occasionLabel: "", methodLabel: "Sem preferência", notes: "",
+  };
+  const minimalMsg = L.buildMessage(minimalData);
+  assertTrue(!minimalMsg.includes("Ocasião:"), "buildMessage: omite a linha Ocasião quando não informada");
+  assertTrue(!minimalMsg.includes("Observações:"), "buildMessage: omite a linha Observações quando vazia");
+  assertTrue(minimalMsg.includes("Método especial: Sem preferência"), "buildMessage: sempre inclui Método especial, mesmo como 'Sem preferência'");
+
+  // ---------- 8. Mensagem de confirmação humana sempre presente ----------
+  assertTrue(msg.includes("confirmação da equipe Bloom") && minimalMsg.includes("confirmação da equipe Bloom"), "buildMessage: a frase de confirmação humana aparece em toda mensagem gerada");
+
+  // ---------- 9. Estado sem WhatsApp configurado ----------
+  const urlNoNumber = L.buildWhatsAppUrl("", msg);
+  assertEqual(urlNoNumber, null, "buildWhatsAppUrl: retorna null quando número não está configurado (nunca gera link quebrado)");
+  const urlWithNumber = L.buildWhatsAppUrl("5547999999999", msg);
+  assertTrue(urlWithNumber && urlWithNumber.startsWith("https://wa.me/5547999999999?text="), "buildWhatsAppUrl: gera link wa.me válido quando número está configurado");
+
+  // ---------- 10. Ausência de dados pessoais no localStorage ----------
+  // BloomReservationLogic é puramente funcional — não deve, em nenhuma circunstância,
+  // escrever em localStorage. Confirma que a chave usada pelo carrinho (outra
+  // feature) não foi contaminada e que nenhuma nova chave de reserva existe.
+  const hasReservationStorage = Object.keys(localStorage).some((k) => k.toLowerCase().includes("reserv"));
+  assertTrue(!hasReservationStorage, "localStorage: nenhuma chave relacionada a reservas foi criada");
+
+  // ---------- 11. Configuração não pode ser alterada em runtime ----------
+  assertTrue(Object.isFrozen(BLOOM_RESERVATION_CONFIG), "BLOOM_RESERVATION_CONFIG: está congelado (Object.freeze), evita edição acidental em runtime");
+  assertTrue(BLOOM_RESERVATION_CONFIG.availableTimes.length > 0, "BLOOM_RESERVATION_CONFIG: possui horários configurados (janela de solicitação, não agenda real)");
+
+  // ---------- Renderização dos resultados ----------
+  const resultsEl = document.getElementById("results");
+  let failCount = 0;
+  results.forEach((r) => {
+    const div = document.createElement("div");
+    div.className = "result " + (r.pass ? "pass" : "fail");
+    div.textContent = (r.pass ? "PASS — " : "FAIL — ") + r.label +
+      (r.pass ? "" : ` (esperado: ${JSON.stringify(r.expected)}, obtido: ${JSON.stringify(r.actual)})`);
+    resultsEl.appendChild(div);
+    if (!r.pass) failCount += 1;
+  });
+
+  const summaryEl = document.getElementById("summary");
+  summaryEl.className = "summary " + (failCount === 0 ? "all-pass" : "has-fail");
+  summaryEl.textContent = failCount === 0
+    ? `Todos os ${results.length} testes passaram.`
+    : `${failCount} de ${results.length} testes falharam.`;
+
+  console.log(`Bloom Reservas tests: ${results.length - failCount}/${results.length} passed.`);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Bloom Cart — Testes automatizados</title>
+<style>
+  body{ font-family: -apple-system, sans-serif; max-width:720px; margin:40px auto; padding:0 20px; color:#1D1E19; }
+  h1{ font-size:20px; margin-bottom:4px; }
+  p.sub{ color:#666; font-size:13px; margin-bottom:24px; }
+  .result{ padding:10px 14px; border-radius:8px; margin-bottom:8px; font-size:13.5px; font-family:ui-monospace,monospace; }
+  .pass{ background:#E7F3E9; color:#1E5B2F; }
+  .fail{ background:#FCE8E4; color:#8A2E1B; }
+  .summary{ margin-top:20px; padding:14px; border-radius:8px; font-weight:600; }
+  .summary.all-pass{ background:#1E5B2F; color:#fff; }
+  .summary.has-fail{ background:#8A2E1B; color:#fff; }
+</style>
+</head>
+<body>
+<h1>Bloom Cart — Testes automatizados</h1>
+<p class="sub">Executa contra assets/cart.js e assets/menu-data.js reais (não mocks). Abra este arquivo no navegador para rodar.</p>
+<div id="results"></div>
+<div id="summary"></div>
+
+<script src="../assets/menu-data.js"></script>
+<script src="../assets/cart.js"></script>
+<script>
+(function () {
+  const results = [];
+  function assertEqual(actual, expected, label) {
+    const pass = JSON.stringify(actual) === JSON.stringify(expected);
+    results.push({ pass, label, actual, expected });
+  }
+  function assertTrue(value, label) {
+    results.push({ pass: !!value, label, actual: value, expected: true });
+  }
+
+  // Isola o localStorage entre execuções para os testes serem determinísticos.
+  localStorage.removeItem("bloom.cart.v1");
+  BloomCart.clear();
+
+  // ---------- 1. Preço unitário com modificadores ----------
+  const cappuccino = DEMO_MENU_ITEMS.find((p) => p.id === "cappuccino");
+  const mods = [
+    { groupId: "tamanho", optionId: "g", label: "Grande", priceDelta: 4 },
+    { groupId: "leite", optionId: "aveia", label: "Aveia", priceDelta: 3.5 },
+  ];
+  assertEqual(BloomCart.unitPrice(cappuccino, mods), 19.5, "unitPrice: Cappuccino + Grande + Aveia = R$19,50");
+
+  // ---------- 2. Adicionar itens e somar quantidades ----------
+  const espresso = DEMO_MENU_ITEMS.find((p) => p.id === "espresso");
+  BloomCart.addItem(espresso, [], 1, "");
+  BloomCart.addItem(cappuccino, mods, 1, "");
+  let snap = BloomCart.getSnapshot();
+  assertEqual(snap.itemCount, 2, "getSnapshot: 2 itens após duas adições distintas");
+  assertEqual(snap.itemsTotal, 27.5, "getSnapshot: total dos itens = R$27,50 (8 + 19,50)");
+
+  // Adicionar o mesmo item+modificadores de novo deve somar quantidade, não duplicar linha.
+  BloomCart.addItem(cappuccino, mods, 1, "");
+  snap = BloomCart.getSnapshot();
+  assertEqual(snap.items.length, 2, "addItem: item idêntico soma quantidade em vez de duplicar linha");
+  assertEqual(snap.itemCount, 3, "addItem: contagem total de itens = 3 após soma de quantidade");
+
+  // ---------- 3. Alterar quantidade e remover ----------
+  const capLine = BloomCart.getSnapshot().items.find((i) => i.productId === "cappuccino");
+  BloomCart.setQty(capLine.cartItemId, 1);
+  snap = BloomCart.getSnapshot();
+  assertEqual(snap.itemCount, 2, "setQty: reduzir quantidade do cappuccino para 1");
+
+  const espressoLine = BloomCart.getSnapshot().items.find((i) => i.productId === "espresso");
+  BloomCart.removeItem(espressoLine.cartItemId);
+  snap = BloomCart.getSnapshot();
+  assertEqual(snap.items.length, 1, "removeItem: espresso removido, resta 1 linha");
+
+  // ---------- 4. Caffè Sospeso ----------
+  assertEqual(BloomCart.getSnapshot().caffeSospeso, false, "Caffè Sospeso: desativado por padrão");
+  BloomCart.setCaffeSospeso(true);
+  assertEqual(BloomCart.getSnapshot().caffeSospeso, true, "setCaffeSospeso(true): estado ativado");
+  const totalWithSospeso = BloomCart.getTotal(12);
+  assertEqual(totalWithSospeso, 31.5, "getTotal: 19,50 (cappuccino) + 12,00 (Caffè Sospeso) = R$31,50");
+
+  // ---------- 5. Mensagem do WhatsApp ----------
+  const msgOn = BloomCart.buildWhatsAppMessage(12);
+  assertTrue(msgOn.includes("Caffè Sospeso: Sim"), 'Mensagem WhatsApp contém "Caffè Sospeso: Sim" quando ativado');
+  assertTrue(msgOn.includes("Total estimado: R$\u00A031,50"), "Mensagem WhatsApp contém o total correto");
+  assertTrue(!msgOn.includes("Café Suspenso"), 'Mensagem WhatsApp NÃO contém o termo antigo "Café Suspenso"');
+
+  BloomCart.setCaffeSospeso(false);
+  const msgOff = BloomCart.buildWhatsAppMessage(12);
+  assertTrue(msgOff.includes("Caffè Sospeso: Não"), 'Mensagem WhatsApp contém "Caffè Sospeso: Não" quando desativado');
+
+  // ---------- 6. URL do WhatsApp ----------
+  const urlEmpty = BloomCart.buildWhatsAppUrl("", 12);
+  assertEqual(urlEmpty, null, "buildWhatsAppUrl: retorna null quando número não está configurado");
+  const urlFilled = BloomCart.buildWhatsAppUrl("5547999999999", 12);
+  assertTrue(urlFilled && urlFilled.startsWith("https://wa.me/5547999999999?text="), "buildWhatsAppUrl: gera link wa.me válido quando número está configurado");
+
+  // ---------- 7. Persistência (localStorage) ----------
+  const raw = localStorage.getItem("bloom.cart.v1");
+  assertTrue(!!raw, "localStorage: carrinho foi persistido");
+  const parsed = JSON.parse(raw);
+  assertTrue(Object.prototype.hasOwnProperty.call(parsed, "caffeSospeso"), 'localStorage: campo salvo chama-se "caffeSospeso" (não "suspendedCoffee")');
+
+  // ---------- 8. Formatação de moeda ----------
+  assertEqual(BloomCart.formatBRL(8), "R$\u00A08,00", "formatBRL: formata 8 como R$ 8,00");
+
+  // ---------- 9. Produto indisponível não pode ser adicionado ----------
+  const unavailable = DEMO_MENU_ITEMS.find((p) => p.available === false);
+  let threw = false;
+  try { BloomCart.addItem(unavailable, [], 1, ""); } catch (e) { threw = true; }
+  assertTrue(threw, "addItem: lança erro ao tentar adicionar produto indisponível");
+
+  // Limpa o estado de teste para não vazar para uma sessão real do usuário.
+  BloomCart.clear();
+  localStorage.removeItem("bloom.cart.v1");
+
+  // ---------- Renderização dos resultados ----------
+  const resultsEl = document.getElementById("results");
+  let failCount = 0;
+  results.forEach((r) => {
+    const div = document.createElement("div");
+    div.className = "result " + (r.pass ? "pass" : "fail");
+    div.textContent = (r.pass ? "PASS — " : "FAIL — ") + r.label +
+      (r.pass ? "" : ` (esperado: ${JSON.stringify(r.expected)}, obtido: ${JSON.stringify(r.actual)})`);
+    resultsEl.appendChild(div);
+    if (!r.pass) failCount += 1;
+  });
+
+  const summaryEl = document.getElementById("summary");
+  summaryEl.className = "summary " + (failCount === 0 ? "all-pass" : "has-fail");
+  summaryEl.textContent = failCount === 0
+    ? `Todos os ${results.length} testes passaram.`
+    : `${failCount} de ${results.length} testes falharam.`;
+
+  console.log(`Bloom Cart tests: ${results.length - failCount}/${results.length} passed.`);
+})();
+</script>
+</body>
+</html>

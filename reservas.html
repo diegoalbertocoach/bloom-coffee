@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Reservas — Bloom Coffee</title>
+<meta name="description" content="Solicite sua reserva na Bloom Coffee — Balneário Camboriú.">
+<meta name="robots" content="noindex">
+<!--
+  ============================================================================
+  RESERVAS BLOOM — FASE 2 (isolada, não conectada ao index.html)
+  ============================================================================
+  Funções REAIS nesta versão:
+    - formulário com validação real (nome, telefone, data, horário, pessoas);
+    - bloqueio de datas passadas;
+    - seletor de número de pessoas com limites configuráveis;
+    - seleção de método de extração especial e ocasião;
+    - resumo da solicitação atualizado em tempo real;
+    - geração de mensagem formatada e link para WhatsApp.
+
+  NÃO existe (e a interface nunca afirma o contrário):
+    - agenda em tempo real;
+    - confirmação automática;
+    - disponibilidade garantida;
+    - backend ou banco de dados.
+  Toda solicitação depende de confirmação humana da equipe Bloom — mensagem
+  fixa "Sua solicitação será confirmada pela equipe Bloom." está sempre visível.
+
+  Privacidade: nenhum dado do formulário (nome, telefone, data, observações)
+  é salvo em localStorage ou em qualquer lugar. Os dados existem só na
+  sessão atual, até a mensagem ser gerada e enviada pelo próprio usuário.
+
+  Configuração: assets/reservas.js → BLOOM_RESERVATION_CONFIG
+  (número de WhatsApp, horários, limites de pessoas, ocasiões, métodos).
+  ============================================================================
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,420;0,9..144,480;0,9..144,600;1,9..144,420&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/shared.css">
+</head>
+<body class="no-cart-bar">
+
+<a class="sr-only" href="#reservaForm">Pular para o formulário de reserva</a>
+
+<!-- ================= HEADER ================= -->
+<header class="menu-header">
+  <a class="back-link" href="index.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M15 18l-6-6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <span>Bloom</span>
+  </a>
+  <span class="brand">Reservas</span>
+  <a class="cart-peek" href="cardapio.html" aria-label="Ver cardápio digital">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 7h16l-1.5 11a2 2 0 0 1-2 1.8H7.5a2 2 0 0 1-2-1.8L4 7Z"/><path d="M8 7V5a4 4 0 0 1 8 0v2"/></svg>
+  </a>
+</header>
+
+<!-- ================= INTRO ================= -->
+<div class="menu-intro">
+  <p class="eyebrow">Bloom Coffee · Balneário Camboriú</p>
+  <h1>Reserve seu lugar para uma manhã que merece ser vivida com calma.</h1>
+  <p>Escolha o momento. Nós cuidamos da experiência.</p>
+</div>
+
+<main class="reserva-main">
+
+  <div class="reserva-notice">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01" stroke-linecap="round"/></svg>
+    <span>Os horários exibidos representam janelas para solicitação. A disponibilidade será confirmada pela equipe Bloom.</span>
+  </div>
+
+  <form id="reservaForm" novalidate>
+
+    <!-- ================= DADOS ================= -->
+    <div class="form-section">
+      <h2 class="form-section-title">Seus dados</h2>
+      <p class="form-section-desc">Para a equipe entrar em contato e confirmar sua reserva.</p>
+
+      <div class="form-field">
+        <label for="fieldName">Nome</label>
+        <input class="form-input" type="text" id="fieldName" name="name" autocomplete="name" aria-describedby="error-name" required>
+        <p class="field-error" id="error-name" role="alert"></p>
+      </div>
+
+      <div class="form-field">
+        <label for="fieldPhone">Telefone</label>
+        <input class="form-input" type="tel" id="fieldPhone" name="phone" inputmode="tel" autocomplete="tel" placeholder="(47) 90000-0000" aria-describedby="error-phone" required>
+        <p class="field-error" id="error-phone" role="alert"></p>
+      </div>
+    </div>
+
+    <!-- ================= DATA E HORÁRIO ================= -->
+    <div class="form-section">
+      <h2 class="form-section-title">Data e horário</h2>
+
+      <div class="form-row">
+        <div class="form-field">
+          <label for="fieldDate">Data</label>
+          <input class="form-input" type="date" id="fieldDate" name="date" aria-describedby="error-date" required>
+          <p class="field-error" id="error-date" role="alert"></p>
+        </div>
+        <div class="form-field">
+          <label for="fieldTime">Horário</label>
+          <select class="form-select" id="fieldTime" name="time" aria-describedby="error-time" required></select>
+          <p class="field-error" id="error-time" role="alert"></p>
+        </div>
+      </div>
+
+      <div class="form-field">
+        <div class="guest-field">
+          <span class="guest-field-label">Número de pessoas</span>
+          <div class="qty-stepper guest-stepper" style="margin:0;">
+            <button class="qty-btn" type="button" id="guestMinus" aria-label="Diminuir número de pessoas">&minus;</button>
+            <span class="qty-value" id="guestValue">1</span>
+            <button class="qty-btn" type="button" id="guestPlus" aria-label="Aumentar número de pessoas">+</button>
+          </div>
+        </div>
+        <p class="field-error" id="error-guests" role="alert"></p>
+      </div>
+    </div>
+
+    <!-- ================= OCASIÃO ================= -->
+    <div class="form-section">
+      <h2 class="form-section-title">Ocasião <span class="optional-tag">(opcional)</span></h2>
+      <div class="form-field" style="margin-bottom:0;">
+        <label for="fieldOccasion" class="sr-only">Ocasião</label>
+        <select class="form-select" id="fieldOccasion"></select>
+      </div>
+    </div>
+
+    <!-- ================= MÉTODO ESPECIAL ================= -->
+    <div class="form-section">
+      <h2 class="form-section-title">Deseja preparar algo especial para sua chegada?</h2>
+      <p class="form-section-desc">Você pode solicitar um método especial antecipadamente. A disponibilidade será confirmada pela equipe.</p>
+      <div id="methodOptions" style="display:flex; flex-direction:column; gap:8px;"></div>
+    </div>
+
+    <!-- ================= OBSERVAÇÕES ================= -->
+    <div class="form-section">
+      <h2 class="form-section-title">Observações <span class="optional-tag">(opcional)</span></h2>
+      <label for="fieldNotes" class="sr-only">Observações</label>
+      <textarea class="notes-field" id="fieldNotes" rows="3" placeholder="Conte-nos se existe algo que podemos preparar para tornar sua experiência ainda mais especial." style="margin-bottom:0;"></textarea>
+    </div>
+
+    <!-- ================= RESUMO ================= -->
+    <div class="reserva-summary">
+      <div class="reserva-summary-title">Resumo da solicitação</div>
+      <div id="reservaSummaryBody"></div>
+
+      <button class="btn-reserva-whatsapp" type="button" id="reservaWhatsappBtn">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 14.4c-.3-.1-1.7-.8-1.9-.9-.3-.1-.4-.1-.6.1-.2.3-.7.9-.8 1-.2.2-.3.2-.5.1-.3-.1-1.2-.4-2.2-1.4-.8-.7-1.4-1.6-1.5-1.9-.2-.3 0-.4.1-.6.1-.1.3-.3.4-.5.1-.1.2-.3.2-.4.1-.2 0-.3 0-.5-.1-.1-.6-1.5-.9-2-.2-.5-.4-.5-.6-.5h-.5c-.2 0-.5.1-.7.3-.3.3-1 1-1 2.4s1 2.8 1.2 3c.1.2 2 3.1 4.9 4.3.7.3 1.2.5 1.6.6.7.2 1.3.2 1.8.1.5-.1 1.7-.7 1.9-1.3.2-.7.2-1.2.2-1.3-.1-.2-.3-.2-.6-.4Z"/><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm0 18.2a8.2 8.2 0 0 1-4.2-1.1l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2Z"/></svg>
+        Solicitar reserva pelo WhatsApp
+      </button>
+      <p class="reserva-pending-note" id="reservaWhatsappNote"></p>
+      <p class="reserva-confirm-note">Sua solicitação será confirmada pela equipe Bloom.</p>
+    </div>
+
+  </form>
+</main>
+
+<!-- ================= RODAPÉ ================= -->
+<footer class="menu-footer">
+  <p>Reservas sujeitas à confirmação da equipe Bloom.<br>Horários e disponibilidade podem sofrer alterações.</p>
+</footer>
+
+<script src="assets/reservas.js"></script>
+</body>
+</html>

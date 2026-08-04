@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Cardápio Digital — Bloom Coffee</title>
+<meta name="description" content="Cardápio digital da Bloom Coffee — Balneário Camboriú.">
+<meta name="robots" content="noindex">
+<!--
+  ============================================================================
+  CARDÁPIO DIGITAL — FASE 1 (isolado, não conectado ao index.html)
+  ============================================================================
+  Funções REAIS nesta versão:
+    - navegação por categoria, busca, cards de produto;
+    - modificadores (tamanho, tipo de leite) com preço recalculado;
+    - sacola com localStorage (quantidade, remoção, observações);
+    - Caffè Sospeso (soma ao total, entra na mensagem do pedido);
+    - geração de mensagem formatada e link para WhatsApp.
+
+  Funções PENDENTES (fora do escopo desta fase, ver Fase 2+):
+    - Bloom Circle, autenticação, reservas, QR Code, badges, contador
+      comunitário real, banco de dados, pagamentos.
+
+  Dados de produto: assets/menu-data.js — DEMO MENU DATA, substituir pelo
+  cardápio oficial antes de publicar.
+
+  Número de WhatsApp: assets/menu-data.js → BLOOM_CONFIG.whatsappNumber
+  (vazio até ser fornecido pela Bloom — o botão de finalizar pedido fica
+  visível, porém desativado, com aviso, enquanto isso).
+  ============================================================================
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,420;0,9..144,480;0,9..144,600;1,9..144,420&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/shared.css">
+</head>
+<body>
+
+<a class="sr-only" href="#menuSections">Pular para o cardápio</a>
+
+<!-- ================= HEADER ================= -->
+<header class="menu-header">
+  <a class="back-link" href="index.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M15 18l-6-6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <span>Bloom</span>
+  </a>
+  <span class="brand">Cardápio</span>
+  <button class="cart-peek" id="cartPeekBtn" aria-label="Abrir sacola">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 7h16l-1.5 11a2 2 0 0 1-2 1.8H7.5a2 2 0 0 1-2-1.8L4 7Z"/><path d="M8 7V5a4 4 0 0 1 8 0v2"/></svg>
+    <span id="cartPeekCount">0</span>
+  </button>
+</header>
+
+<!-- ================= INTRO ================= -->
+<div class="menu-intro">
+  <p class="eyebrow">Bloom Coffee · Balneário Camboriú</p>
+  <h1>Escolha o seu jeito de começar.</h1>
+  <p>Monte seu pedido, ajuste do seu jeito e finalize pelo WhatsApp — a equipe confirma tudo com você.</p>
+</div>
+
+<!-- ================= BUSCA ================= -->
+<div class="menu-search">
+  <label class="sr-only" for="searchInput">Buscar no cardápio</label>
+  <input class="menu-search-input" id="searchInput" type="search" placeholder="Buscar no cardápio…" autocomplete="off">
+</div>
+
+<!-- ================= ABAS DE CATEGORIA ================= -->
+<nav class="category-tabs-wrap" aria-label="Categorias do cardápio">
+  <div class="category-tabs" id="categoryTabs" role="tablist"></div>
+</nav>
+
+<!-- ================= PRODUTOS ================= -->
+<main id="menuSections"></main>
+
+<!-- ================= RODAPÉ ================= -->
+<footer class="menu-footer">
+  <p>Cardápio ilustrativo, em atualização pela equipe Bloom.<br>Preços e disponibilidade podem sofrer alterações. Consulte a equipe.</p>
+</footer>
+
+<!-- ================= BARRA FLUTUANTE (mobile) ================= -->
+<div class="cart-bar" id="cartBar" aria-hidden="true">
+  <div class="cart-bar-info">
+    <span class="cart-bar-count" id="cartBarCount">0 itens</span>
+    <span class="cart-bar-total" id="cartBarTotal">R$ 0,00</span>
+  </div>
+  <button class="cart-bar-btn" id="cartBarBtn">Ver sacola</button>
+</div>
+
+<!-- ================= DRAWER DA SACOLA ================= -->
+<div class="sheet-backdrop" id="cartDrawerBackdrop" aria-hidden="true"></div>
+<aside class="cart-drawer" id="cartDrawer" aria-label="Sua sacola" role="dialog" aria-modal="true">
+  <div class="cart-drawer-header">
+    <span class="cart-drawer-title">Sua sacola</span>
+    <button class="cart-drawer-close" id="cartDrawerCloseBtn" aria-label="Fechar sacola">&times;</button>
+  </div>
+  <div style="flex:1; overflow-y:auto;">
+    <div class="caffe-sospeso">
+      <svg class="caffe-sospeso-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M4 9v6a5 5 0 0 0 5 5h2a5 5 0 0 0 5-5V9H4Z"/><path d="M16 10h2a2.5 2.5 0 0 1 0 5h-2" stroke-linecap="round"/><path d="M8 3c0 1.2-1.2 1.5-1.2 2.7S8 7 8 7M12 3c0 1.2-1.2 1.5-1.2 2.7S12 7 12 7" stroke-linecap="round"/></svg>
+      <div class="caffe-sospeso-text">
+        <div class="caffe-sospeso-title">Caffè Sospeso</div>
+        <div class="caffe-sospeso-desc">Gostaria de deixar um café para alguém que talvez esteja precisando hoje?</div>
+        <div class="caffe-sospeso-institutional">Um movimento que começa com cada gesto.</div>
+      </div>
+      <button class="toggle-switch" id="caffeSospesoToggle" role="switch" aria-checked="false" aria-label="Ativar Caffè Sospeso"></button>
+    </div>
+    <div id="cartDrawerBody"></div>
+  </div>
+  <div class="cart-drawer-footer">
+    <div class="cart-total-row">
+      <span class="cart-total-label">Total estimado</span>
+      <span class="cart-total-value" id="cartTotalValue">R$ 0,00</span>
+    </div>
+    <button class="btn-whatsapp" id="whatsappBtn" disabled>
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 14.4c-.3-.1-1.7-.8-1.9-.9-.3-.1-.4-.1-.6.1-.2.3-.7.9-.8 1-.2.2-.3.2-.5.1-.3-.1-1.2-.4-2.2-1.4-.8-.7-1.4-1.6-1.5-1.9-.2-.3 0-.4.1-.6.1-.1.3-.3.4-.5.1-.1.2-.3.2-.4.1-.2 0-.3 0-.5-.1-.1-.6-1.5-.9-2-.2-.5-.4-.5-.6-.5h-.5c-.2 0-.5.1-.7.3-.3.3-1 1-1 2.4s1 2.8 1.2 3c.1.2 2 3.1 4.9 4.3.7.3 1.2.5 1.6.6.7.2 1.3.2 1.8.1.5-.1 1.7-.7 1.9-1.3.2-.7.2-1.2.2-1.3-.1-.2-.3-.2-.6-.4Z"/><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm0 18.2a8.2 8.2 0 0 1-4.2-1.1l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2Z"/></svg>
+      Finalizar pelo WhatsApp
+    </button>
+    <p class="whatsapp-pending-note" id="whatsappNote"></p>
+    <p class="cart-confirm-note">O pedido é enviado à equipe Bloom para confirmação — não é uma compra finalizada automaticamente.</p>
+  </div>
+</aside>
+
+<!-- ================= SHEET DE MODIFICADORES ================= -->
+<div class="sheet-backdrop" id="sheetBackdrop" aria-hidden="true"></div>
+<div class="modifier-sheet" id="modifierSheet" role="dialog" aria-modal="true" aria-label="Personalizar item"></div>
+
+<!-- ================= TOAST ================= -->
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="assets/menu-data.js"></script>
+<script src="assets/cart.js"></script>
+<script src="assets/menu-app.js"></script>
+</body>
+</html>
