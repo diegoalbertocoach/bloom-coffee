@@ -14,8 +14,9 @@ export default defineConfig({
       input: {
         main: resolve(__dirname, "index.html"),
         cardapio: resolve(__dirname, "cardapio.html"),
-        reservas: resolve(__dirname, "reservas.html"),
+        pedido: resolve(__dirname, "pedido.html"),
         circle: resolve(__dirname, "circle.html"),
+        reservas: resolve(__dirname, "reservas.html"),
       },
     },
   },
