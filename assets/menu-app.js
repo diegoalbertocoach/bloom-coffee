@@ -64,38 +64,45 @@
       .map((t) => `<span class="product-tag">${escapeHtml(t)}</span>`)
       .join("");
     const priceLabel = BloomCart.formatBRL(product.price);
+    const photoIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M6 8h12l-1 9.5A2 2 0 0 1 15 19H9a2 2 0 0 1-2-1.5L6 8Z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>`;
 
     if (!product.available) {
       return `
       <article class="product-card is-unavailable" data-id="${product.id}">
-        <div class="product-card-top">
-          <div>
-            <div class="product-card-name">${escapeHtml(product.name)}</div>
-            <div class="product-card-desc">${escapeHtml(product.description)}</div>
-            <div class="product-card-tags">${tagsHtml}</div>
+        <div class="product-card-photo" aria-hidden="true">${photoIcon}</div>
+        <div class="product-card-body">
+          <div class="product-card-top">
+            <div>
+              <div class="product-card-name">${escapeHtml(product.name)}</div>
+              <div class="product-card-desc">${escapeHtml(product.description)}</div>
+              <div class="product-card-tags">${tagsHtml}</div>
+            </div>
           </div>
-        </div>
-        <div class="product-card-bottom">
-          <span class="product-price">${priceLabel}</span>
-          <span class="product-unavailable-label">Indisponível hoje</span>
+          <div class="product-card-bottom">
+            <span class="product-price">${priceLabel}</span>
+            <span class="product-unavailable-label">Indisponível hoje</span>
+          </div>
         </div>
       </article>`;
     }
 
     return `
       <article class="product-card" data-id="${product.id}">
-        <div class="product-card-top">
-          <div>
-            <div class="product-card-name">${escapeHtml(product.name)}</div>
-            <div class="product-card-desc">${escapeHtml(product.description)}</div>
-            <div class="product-card-tags">${tagsHtml}</div>
+        <div class="product-card-photo" aria-hidden="true">${photoIcon}</div>
+        <div class="product-card-body">
+          <div class="product-card-top">
+            <div>
+              <div class="product-card-name">${escapeHtml(product.name)}</div>
+              <div class="product-card-desc">${escapeHtml(product.description)}</div>
+              <div class="product-card-tags">${tagsHtml}</div>
+            </div>
           </div>
-        </div>
-        <div class="product-card-bottom">
-          <span class="product-price">${priceLabel}</span>
-          <button class="btn-add" data-add="${product.id}" aria-label="Adicionar ${escapeHtml(product.name)} à sacola">
-            Adicionar
-          </button>
+          <div class="product-card-bottom">
+            <span class="product-price">${priceLabel}</span>
+            <button class="btn-add" data-add="${product.id}" aria-label="Adicionar ${escapeHtml(product.name)} à sacola">
+              Adicionar
+            </button>
+          </div>
         </div>
       </article>`;
   }
@@ -108,14 +115,33 @@
       </div>`;
   }
 
+  function itemsForCategory(catId, query) {
+    if (catId === "destaques") {
+      return DEMO_MENU_ITEMS.filter((p) => p.featured && productMatchesSearch(p, query));
+    }
+    return DEMO_MENU_ITEMS.filter((p) => p.category === catId && productMatchesSearch(p, query));
+  }
+
   function renderProducts() {
     const container = $("#menuSections");
     const query = state.searchQuery.trim();
     let anyResult = false;
 
     const html = CATEGORIES.map((cat) => {
-      const items = DEMO_MENU_ITEMS.filter((p) => p.category === cat.id && productMatchesSearch(p, query));
-      if (items.length === 0) return "";
+      const items = itemsForCategory(cat.id, query);
+      if (items.length === 0) {
+        // "Sazonais" pode legitimamente não ter itens ainda — mostramos isso
+        // com clareza em vez de inventar produtos de estação.
+        if (cat.id === "sazonais" && !query) {
+          anyResult = true;
+          return `
+            <section class="menu-section" id="section-${cat.id}" data-category-section="${cat.id}">
+              <h2 class="menu-section-title">${escapeHtml(cat.label)}</h2>
+              <p class="seasonal-empty-note">Nenhum item sazonal no momento. Novidades chegam com as próximas estações.</p>
+            </section>`;
+        }
+        return "";
+      }
       anyResult = true;
       return `
         <section class="menu-section" id="section-${cat.id}" data-category-section="${cat.id}">
@@ -380,19 +406,11 @@
     const total = BloomCart.getTotal(BLOOM_CONFIG.caffeSospesoPrice);
     $("#cartTotalValue").textContent = BloomCart.formatBRL(total);
 
-    const whatsappUrl = BloomCart.buildWhatsAppUrl(BLOOM_CONFIG.whatsappNumber, BLOOM_CONFIG.caffeSospesoPrice);
-    const btn = $("#whatsappBtn");
-    const note = $("#whatsappNote");
-    if (snap.items.length === 0) {
-      btn.setAttribute("disabled", "true");
-      note.textContent = "";
-    } else if (!whatsappUrl) {
-      btn.setAttribute("disabled", "true");
-      note.textContent = "Número de WhatsApp da Bloom ainda não configurado (BLOOM_CONFIG.whatsappNumber).";
-    } else {
-      btn.removeAttribute("disabled");
-      btn.dataset.href = whatsappUrl;
-      note.textContent = "";
+    // O CTA da sacola agora é um link direto para pedido.html — o carrinho
+    // já está em localStorage, então pedido.html lê o mesmo BloomCart.
+    const continueBtn = $("#continueToOrderBtn");
+    if (continueBtn) {
+      continueBtn.classList.toggle("is-disabled-look", snap.items.length === 0);
     }
 
     renderCaffeSospesoToggle();
@@ -462,12 +480,6 @@
     $("#caffeSospesoToggle").addEventListener("click", () => {
       const snap = BloomCart.getSnapshot();
       BloomCart.setCaffeSospeso(!snap.caffeSospeso);
-    });
-
-    $("#whatsappBtn").addEventListener("click", (e) => {
-      const btn = e.currentTarget;
-      if (btn.hasAttribute("disabled")) return;
-      if (btn.dataset.href) window.open(btn.dataset.href, "_blank", "noopener");
     });
 
     document.addEventListener("keydown", (e) => {

@@ -1,4 +1,9 @@
-# Bloom Coffee — Cardápio, Reservas e Bloom Circle (Fases 1, 2 e 3)
+# Bloom Coffee — Cardápio, Peça antes de chegar e Bloom Circle
+
+**Arquitetura reestruturada.** `reservas.html` deixou de ser promovido na
+navegação pública (permanece no repositório, funcional, mas não é mais
+referenciado por nenhuma outra página). A experiência de pedido antecipado
+para retirada (`pedido.html`) assume esse lugar na navegação.
 
 Entrega isolada, **não conectada** ao `index.html` público. Aguardando
 aprovação antes de qualquer integração.
@@ -6,23 +11,81 @@ aprovação antes de qualquer integração.
 ## Estrutura de arquivos
 
 ```
-cardapio.html              Cardápio digital (Fase 1)
-reservas.html              Solicitação de reservas (Fase 2)
-circle.html                 Bloom Circle — demonstração (Fase 3)
+cardapio.html              Cardápio digital (reestruturado)
+pedido.html                 Peça antes de chegar — pedido antecipado para retirada
+reservas.html                (não promovido — mantido no repositório, funcional)
+circle.html                Bloom Circle — demonstração
 assets/
-  shared.css                 Visual — mesmos tokens de marca do index.html
-  menu-data.js                 DADOS DO CARDÁPIO (produtos, preços, config)
-  cart.js                       Lógica do carrinho (estado, cálculo, WhatsApp)
-  menu-app.js                    Interface do cardápio (renderização, eventos)
-  reservas.js                     BloomReservationLogic + interface das reservas
-  circle-data.js                   DADOS DEMONSTRATIVOS da Bloom Circle
-  circle.js                         BloomCircleLogic + BloomCirclePrefs + interface
+  shared.css                 Visual + NAVEGAÇÃO GLOBAL (.global-subnav desktop, .bottom-nav mobile)
+  menu-data.js                 DADOS DO CARDÁPIO (categorias: Destaques, Cafés quentes, Gelados, Matcha, Comidas, Sazonais)
+  cart.js                       Lógica do carrinho (compartilhada por cardápio e pedido)
+  menu-app.js                    Interface do cardápio
+  pedido.js                       BloomPedidoLogic + interface do pedido antecipado
+  reservas.js                      BloomReservationLogic (mantido, não promovido)
+  circle-data.js                    DADOS DEMONSTRATIVOS da Bloom Circle
+  circle.js                          BloomCircleLogic + BloomCirclePrefs + interface
 tests/
-  smoke-test.html              Testes automatizados do cardápio (Fase 1)
-  reservas-smoke-test.html      Testes automatizados das reservas (Fase 2)
-  circle-smoke-test.html         Testes automatizados da Bloom Circle (Fase 3)
+  smoke-test.html              Testes do cardápio
+  reservas-smoke-test.html      Testes das reservas (mantidos)
+  circle-smoke-test.html         Testes da Bloom Circle
 README.md                  Este arquivo
 ```
+
+## Refinamento visual — nível "produção premium"
+
+- **Hero editorial com foto real** em `cardapio.html` e `pedido.html` (fotos
+  já usadas no site principal — croissant+café e sacola kraft na praia),
+  com overlay escuro e busca flutuando sobre a borda inferior do hero.
+- **Cards de produto redesenhados**: área reservada para fotografia (ainda
+  sem fotos reais dos produtos — placeholder elegante com ícone de xícara,
+  não uma foto genérica de banco de imagens), sombra e elevação mais suaves.
+- **`pedido.html` em duas colunas no desktop**: formulário à esquerda,
+  resumo fixo (sticky) à direita — corrigido um bug real de layout onde o
+  cartão do Caffè Sospeso ficava espremido numa coluna muito estreita porque
+  o contêiner herdava a largura máxima de 640px do formulário de reservas.
+- **`circle.html` reordenado em fluxo narrativo**: saudação pessoal → nível
+  atual → ilustração de crescimento → linha da jornada → coleção das
+  estações → **Caffè Sospeso (nova seção, antes ausente do Circle)** →
+  experiências → histórico → mural → cartão digital.
+
+## Reestruturação — o que mudou
+
+### Navegação global compartilhada
+- **Desktop**: linha de navegação secundária abaixo do cabeçalho — Início ·
+  Cardápio · Peça antes de chegar · Bloom Circle · Localização — presente em
+  `cardapio.html`, `pedido.html` e `circle.html`.
+- **Mobile**: barra inferior fixa com 4 itens (Início, Cardápio, Pedido,
+  Circle), ícones lineares, item ativo destacado, respeitando
+  `safe-area-inset-bottom`.
+- `index.html` **não foi alterado** — mantém seu próprio cabeçalho, já
+  aprovado em rodadas anteriores.
+
+### Cardápio — categorias reorganizadas
+Categorias atuais: **Destaques**, Cafés quentes, Gelados, Matcha, Comidas
+(unificando os antigos Croissants/Cookies/Comidinhas) e **Sazonais**.
+- "Destaques" mostra 4 itens marcados com `featured: true` em
+  `menu-data.js` — não são produtos novos, apenas um recorte dos já
+  existentes.
+- "Sazonais" está **honestamente vazia** por enquanto — em vez de inventar
+  produtos de estação, mostra "Nenhum item sazonal no momento."
+
+### Sacola → Pedido (fluxo alterado)
+O botão da sacola deixou de enviar direto pelo WhatsApp. Agora ele é
+**"Continuar para o pedido"**, que leva a `pedido.html` — a sacola (mesmo
+`BloomCart`, mesmo `localStorage`) é lida lá, onde o cliente preenche nome,
+telefone, horário estimado de retirada e forma de retirada antes do envio
+final pelo WhatsApp.
+
+### ⚠️ Ponto que exigiu uma decisão minha — leia isto
+A especificação desta etapa **foi cortada** exatamente na lista de campos da
+Fase B ("7. Caffè Sospeso"), sem descrever o formato da mensagem final nem o
+texto do botão de envio. Para não travar a entrega, segui o mesmo padrão já
+aprovado em `reservas.js` (mensagem formatada, link `wa.me`, aviso de
+confirmação humana obrigatório) e nomeei o botão **"Enviar pedido pelo
+WhatsApp"**. Se você já tinha um texto específico em mente para essa parte,
+me diga e eu ajusto — é a única parte desta entrega que não veio
+explicitamente especificada.
+
 
 ## Como testar localmente
 

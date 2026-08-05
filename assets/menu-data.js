@@ -32,12 +32,12 @@ const BLOOM_CONFIG = {
 
 // Categorias exibidas nas abas de navegação, na ordem em que aparecem.
 const CATEGORIES = [
+  { id: "destaques", label: "Destaques" },
   { id: "quentes", label: "Cafés quentes" },
   { id: "gelados", label: "Gelados" },
   { id: "matcha", label: "Matcha" },
-  { id: "croissants", label: "Croissants" },
-  { id: "cookies", label: "Cookies" },
-  { id: "sanduiches", label: "Comidinhas" },
+  { id: "comidas", label: "Comidas" },
+  { id: "sazonais", label: "Sazonais" },
 ];
 
 // Grupos de modificadores reutilizáveis entre produtos.
@@ -94,6 +94,7 @@ const DEMO_MENU_ITEMS = [
   {
     id: "cappuccino",
     category: "quentes",
+    featured: true,
     name: "Cappuccino",
     description: "Espresso, leite vaporizado e espuma cremosa.",
     price: 12,
@@ -146,6 +147,7 @@ const DEMO_MENU_ITEMS = [
   {
     id: "iced-latte",
     category: "gelados",
+    featured: true,
     name: "Iced Latte",
     description: "Café, leite e gelo — leve e refrescante.",
     price: 15,
@@ -209,7 +211,8 @@ const DEMO_MENU_ITEMS = [
   // ---------- CROISSANTS ----------
   {
     id: "croissant-tradicional",
-    category: "croissants",
+    category: "comidas",
+    featured: true,
     name: "Croissant Tradicional",
     description: "Amanteigado, folhado, feito diariamente.",
     price: 14,
@@ -219,7 +222,7 @@ const DEMO_MENU_ITEMS = [
   },
   {
     id: "croissant-presunto-queijo",
-    category: "croissants",
+    category: "comidas",
     name: "Croissant Presunto e Queijo",
     description: "Recheado, tostado na hora do pedido.",
     price: 18,
@@ -229,7 +232,7 @@ const DEMO_MENU_ITEMS = [
   },
   {
     id: "pain-au-chocolat",
-    category: "croissants",
+    category: "comidas",
     name: "Pain au Chocolat",
     description: "Folhado amanteigado com chocolate.",
     price: 16,
@@ -241,7 +244,7 @@ const DEMO_MENU_ITEMS = [
   // ---------- COOKIES ----------
   {
     id: "cookie-chocolate",
-    category: "cookies",
+    category: "comidas",
     name: "Cookie de Chocolate",
     description: "Crocante por fora, macio por dentro.",
     price: 12,
@@ -251,7 +254,8 @@ const DEMO_MENU_ITEMS = [
   },
   {
     id: "cookie-recheado",
-    category: "cookies",
+    category: "comidas",
+    featured: true,
     name: "Cookie Recheado",
     description: "Com pedaços de chocolate ao leite e branco.",
     price: 14,
@@ -263,7 +267,7 @@ const DEMO_MENU_ITEMS = [
   // ---------- COMIDINHAS ----------
   {
     id: "sanduiche-pesto",
-    category: "sanduiches",
+    category: "comidas",
     name: "Pesto Flow",
     description: "Pão italiano, pesto, tomate fresco e mussarela.",
     price: 26,
@@ -273,7 +277,7 @@ const DEMO_MENU_ITEMS = [
   },
   {
     id: "sanduiche-ricota",
-    category: "sanduiches",
+    category: "comidas",
     name: "Ricotta Cloud",
     description: "Creme de ricota, rúcula e tomate seco.",
     price: 26,
@@ -283,7 +287,7 @@ const DEMO_MENU_ITEMS = [
   },
   {
     id: "pao-de-queijo",
-    category: "sanduiches",
+    category: "comidas",
     name: "Pão de Queijo",
     description: "Porção artesanal, servida quentinha.",
     price: 6,
@@ -293,7 +297,7 @@ const DEMO_MENU_ITEMS = [
   },
   {
     id: "pao-de-queijo-sem-lactose",
-    category: "sanduiches",
+    category: "comidas",
     name: "Pão de Queijo Sem Lactose",
     description: "A mesma receita, versão sem lactose.",
     price: 6,
